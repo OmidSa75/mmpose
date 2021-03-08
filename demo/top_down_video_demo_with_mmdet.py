@@ -1,6 +1,6 @@
 import os
 from argparse import ArgumentParser
-
+import time
 import cv2
 
 from mmpose.apis import (inference_top_down_pose_model, init_pose_model,
@@ -84,6 +84,7 @@ def main():
     dataset = pose_model.cfg.data['test']['type']
 
     cap = cv2.VideoCapture(args.video_path)
+    # cap = cv2.VideoCapture(0)
 
     if args.out_video_root == '':
         save_out_video = False
@@ -106,8 +107,10 @@ def main():
 
     # e.g. use ('backbone', ) to return backbone feature
     output_layer_names = None
-
+    length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    current_frame = 1
     while (cap.isOpened()):
+        tic = time.time()
         flag, img = cap.read()
         if not flag:
             break
@@ -136,6 +139,12 @@ def main():
             dataset=dataset,
             kpt_score_thr=args.kpt_thr,
             show=False)
+        tac = time.time()
+        print(
+            "Frame {}:{}  --- {:.2f}FPS  ------------- Progress: {:.1f}".format(current_frame, length, 1 / (tac - tic),
+                                                                                (current_frame / length) * 100),
+            end='\r')
+        current_frame += 1
 
         if args.show:
             cv2.imshow('Image', vis_img)
